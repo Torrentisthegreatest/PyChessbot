@@ -2,8 +2,9 @@ import sqlite3
 import pickle
 
 def connectdbcursor():
-	global db = sqlite3.connect("tables.db")
-	global c = db.cursor()
+	global db, c
+	db = sqlite3.connect("tables.db")
+	c = db.cursor()
 
 def checktables():
 	try:

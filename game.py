@@ -1,6 +1,10 @@
 import pygame
 from pygame.locals import *
 import storage
+pygame.init()
+size = width, height = 320, 240
+screen = pygame.display.set_mode(size)
+
 
 class Game():
 	whitescore = 0
