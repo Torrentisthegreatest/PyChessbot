@@ -1,13 +1,14 @@
-import configparser, storage, game, qbot
+import configparser, storage, game, qbot, os
 
 def SetConfig():
 	config = configparser.ConfigParser()
 	configdata = config.read('config.ini')
 
-	piecevalues = configdata["PIECEVALUES"]["PAWN"]
+	piecevalues = configdata[0]
 	print(piecevalues)
+	return configdata
 
 storage.connectdbcursor()
 storage.checktables()
 
-Game = game.Game(SetConfig.configdata)
+Game = game.Game(SetConfig())
