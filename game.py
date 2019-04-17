@@ -23,16 +23,39 @@ class Game:
 		while self.GameOn:
 			self.screen.blit(self.background,(0,0))
 			self.loadpieceimg()
-			# for event in pygame.event.get():
-			# 	if event.type == MOUSEBUTTONDOWN:
-			# 		x,y = pygame.mouse.get_pos()
-			# 		print(x,y)
+			for event in pygame.event.get():
+				if event.type == MOUSEBUTTONDOWN and event.button == 1::
+					for piece in self.whitepieces:
+						if self.whitepieces.get(piece)["obj_rect"].collidepoint(pos):
+							self.wshowmoves(piece)
+							break
+					for piece in self.blackpieces:
+						if self.blackpieces.get(piece)["obj_rect"].collidepoint(pos):
+							self.bshowmoves(piece)
+							break
+					
 			pygame.display.flip()
 	
 	def getposxy(self, col, row): #returns tuple
 		x = self.columnvalues[int(col)]
 		y = self.rowvalues[int(row)]
 		return x,y
+
+	def wshowmoves(self, piece):
+		avalspace = pygame.image.load("assets/avalspace.png").convert_alpha()
+		avalspace = avalspace.set_alpha(125)
+		killspace = pygame.image.load("assets/killspace.png").convert_alpha()
+		killspace = killspace.set_alpha(125)
+		actions = self.wavaliableactions(piece) #actions = [{pos:(x,y),kill:True/False}]
+		for act in actions:
+			if act["kill"]:
+				act["obj"] = killspace
+				act["obj_rect"] = killspace.get_rect()
+			else:
+				act["obj"] = avalspace
+				act["obj_rect"] = avalspace.get_rect()
+				actcenterpos = act["obj_rect"].centerx , act["obj_rect"].centery = act["pos"][0], act["pos"][1]
+			self.screen.blit(act["obj"], (act["obj_rect"].x,act["obj_rect"].y) )
 
 	def loadpieceimg(self):
 
@@ -46,7 +69,8 @@ class Game:
 					#imgsize = imgwidth, imgheight = self.whitepieces.get(piece)["obj_rect"].width, self.whitepieces.get(piece)["obj_rect"].height
 					self.whitepieces.get(piece)["obj_rect"].centerx = coords[0]
 					self.whitepieces.get(piece)["obj_rect"].centery = coords[1]
-					self.screen.blit(self.whitepieces.get(piece)["obj"], (coords[0], coords[1]) )
+					rectcoords = rectx, recty = self.whitepieces.get(piece)["obj_rect"].x, self.whitepieces.get(piece)["obj_rect"].y
+					self.screen.blit(self.whitepieces.get(piece)["obj"], (rectx, recty) )
 
 
 			#Starting with Black Pieces that are alive
@@ -59,7 +83,8 @@ class Game:
 					#imgsize = imgwidth, imgheight = self.blackpieces.get(piece)["obj_rect"].width, self.blackpieces.get(piece)["obj_rect"].height
 					self.blackpieces.get(piece)["obj_rect"].centerx = coords[0]
 					self.blackpieces.get(piece)["obj_rect"].centery = coords[1]
-					self.screen.blit(self.blackpieces.get(piece)["obj"], (coords[0], coords[1]) )
+					rectcoords = rectx, recty = self.blackpieces.get(piece)["obj_rect"].x, self.blackpieces.get(piece)["obj_rect"].y
+					self.screen.blit(self.blackpieces.get(piece)["obj"], (rectx, recty) )
 			
 
 	whitepieces = {
@@ -72,13 +97,13 @@ class Game:
 		"p7":{"pos":[6,1], "img":"assets/wpawn.png"},
 		"p8":{"pos":[7,1], "img":"assets/wpawn.png"},
 		"b1":{"pos":[2,0], "img":"assets/wbishop.png"},
-		"b2":{"pos":[6,0], "img":"assets/wbishop.png"},
+		"b2":{"pos":[5,0], "img":"assets/wbishop.png"},
 		"k1":{"pos":[1,0], "img":"assets/wknight.png"},
-		"k2":{"pos":[7,0], "img":"assets/wknight.png"},
+		"k2":{"pos":[6,0], "img":"assets/wknight.png"},
 		"r1":{"pos":[0,0], "img":"assets/wrook.png"},
 		"r2":{"pos":[7,0], "img":"assets/wrook.png"},
-		"K":{"pos":[5,0], "img":"assets/wking.png"},
-		"Q":{"pos":[4,0], "img":"assets/wqueen.png"}
+		"K":{"pos":[4,0], "img":"assets/wking.png"},
+		"Q":{"pos":[3,0], "img":"assets/wqueen.png"}
 	}
 
 	blackpieces = {
@@ -91,13 +116,13 @@ class Game:
 		"p7":{"pos":[6,6], "img":"assets/bpawn.png"},
 		"p8":{"pos":[7,6], "img":"assets/bpawn.png"},
 		"b1":{"pos":[2,7], "img":"assets/bbishop.png"},
-		"b2":{"pos":[6,7], "img":"assets/bbishop.png"},
+		"b2":{"pos":[5,7], "img":"assets/bbishop.png"},
 		"k1":{"pos":[1,7], "img":"assets/bknight.png"},
-		"k2":{"pos":[7,7], "img":"assets/bknight.png"},
+		"k2":{"pos":[6,7], "img":"assets/bknight.png"},
 		"r1":{"pos":[0,7], "img":"assets/brook.png"},
 		"r2":{"pos":[7,7], "img":"assets/brook.png"},
-		"K":{"pos":[5,7], "img":"assets/bking.png"},
-		"Q":{"pos":[4,7], "img":"assets/bqueen.png"}
+		"K":{"pos":[4,7], "img":"assets/bking.png"},
+		"Q":{"pos":[3,7], "img":"assets/bqueen.png"}
 	}
 
 	def whiteisalive(self, piece):
