@@ -24,7 +24,8 @@ class Game:
 			self.screen.blit(self.background,(0,0))
 			self.loadpieceimg()
 			for event in pygame.event.get():
-				if event.type == MOUSEBUTTONDOWN and event.button == 1::
+				if event.type == MOUSEBUTTONDOWN and event.button == 1:
+					pos = x,y = pygame.mouse.get_pos()
 					for piece in self.whitepieces:
 						if self.whitepieces.get(piece)["obj_rect"].collidepoint(pos):
 							self.wshowmoves(piece)
