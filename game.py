@@ -40,14 +40,14 @@ class Game:
 	def getposxy(self, col, row): #returns tuple
 		x = self.columnvalues[int(col)]
 		y = self.rowvalues[int(row)]
-		return x,y
+		return (x,y)
 
 	def wshowmoves(self, piece):
 		avalspace = pygame.image.load("assets/avalspace.png").convert_alpha()
 		avalspace = avalspace.set_alpha(125)
 		killspace = pygame.image.load("assets/killspace.png").convert_alpha()
 		killspace = killspace.set_alpha(125)
-		actions = self.wavaliableactions(piece) #actions = [{pos:(x,y),kill:True/False}]
+		actions = self.wavailableactions(piece) #actions = [{pos:(x,y),kill:True/False}]
 		for act in actions:
 			if act["kill"]:
 				act["obj"] = killspace
@@ -55,8 +55,49 @@ class Game:
 			else:
 				act["obj"] = avalspace
 				act["obj_rect"] = avalspace.get_rect()
-				actcenterpos = act["obj_rect"].centerx , act["obj_rect"].centery = act["pos"][0], act["pos"][1]
+			actcenterpos = act["obj_rect"].centerx , act["obj_rect"].centery = self.getposxy(act["pos"][0], act["pos"][1])
 			self.screen.blit(act["obj"], (act["obj_rect"].x,act["obj_rect"].y) )
+
+	def wavailableactions(self, piece):
+		type = str(piece)[:1]
+		if type == "p":
+			nonAct = []
+			actions = []
+			fwdactpos = [[self.whitepieces.get(piece)["pos"][0], self.whitepieces.get(piece)["pos"][1]+1]]
+			if self.whitepieces.get(piece)["pos"][1] == 1: #Is pawn in init location
+				fwdactpos.append([self.whitepieces.get(piece)["pos"][0], self.whitepieces.get(piece)["pos"][1]+2])
+			for targetP in self.whitepieces:
+				if self.whitepieces.get(targetP)["pos"] in fwdactpos:
+					fwdactpos.pop(fwdactpos.index(self.whitepieces.get(targetP)["pos"]))
+					break
+			for targetP in self.blackpieces:
+				if self.blackpieces.get(targetP)["pos"] in fwdactpos:
+					fwdactpos.pop(fwdactpos.index(self.blackpieces.get(targetP)["pos"]))
+					break
+			for actpos in fwdactpos:
+				actions.append({"pos": (actpos[0], actpos[1]), "kill": False})
+			diagactpos = [[piece["pos"][0]-1, piece["pos"][1]+1], [piece["pos"][0]+1, piece["pos"][1]+1]] # [x,y]
+			for targetP in self.whitepieces:
+				if self.whitepieces.get(targetP)["pos"] in diagactpos:
+					diagactpos.pop(diagactpos.index(self.whitepieces.get(targetP)["pos"]))
+					break
+			for targetP in self.blackpieces:
+				if self.blackpieces.get(targetP)["pos"] in diagactpos:
+					actions.append({"pos": self.blackpieces.get(targetP)["pos"], "kill": True})
+					break
+			return actions
+		elif type == "b":
+			return "bishop"
+		elif type == "k":
+			return "knight"
+		elif type == "r":
+			return "rook"
+		elif type == "K":
+			return "King"
+		elif type == "Q":
+			return "Queen"
+		else:
+			raise Exception("White Available Actions: ", "Invalid piece type")
 
 	def loadpieceimg(self):
 
