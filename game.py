@@ -17,7 +17,7 @@ class Game:
 		self.screen = pygame.display.set_mode(self.screensize)
 		pygame.display.set_caption('PyChess')
 		
-		self.background = pygame.image.load("assets/chessboard.jpg").convert_alpha()
+		self.background = pygame.image.load("assets/chessboard.jpg")
 		self.background = pygame.transform.scale(self.background, self.screensize)
 
 		while self.GameOn:
@@ -65,7 +65,7 @@ class Game:
 				if self.whiteisalive(piece):
 					sqcord = self.whitepieces.get(piece)["pos"]
 					coords = self.getposxy(sqcord[0], sqcord[1])
-					self.whitepieces.get(piece)["obj"] = pygame.image.load(self.whitepieces.get(piece)["img"]).convert()
+					self.whitepieces.get(piece)["obj"] = pygame.image.load(self.whitepieces.get(piece)["img"]).convert_alpha()
 					self.whitepieces.get(piece)["obj_rect"] = self.whitepieces.get(piece)["obj"].get_rect()
 					#imgsize = imgwidth, imgheight = self.whitepieces.get(piece)["obj_rect"].width, self.whitepieces.get(piece)["obj_rect"].height
 					self.whitepieces.get(piece)["obj_rect"].centerx = coords[0]
@@ -79,7 +79,7 @@ class Game:
 				if self.blackisalive(piece):
 					sqcord = self.blackpieces.get(piece)["pos"]
 					coords = self.getposxy(sqcord[0], sqcord[1])
-					self.blackpieces.get(piece)["obj"] = pygame.image.load(self.blackpieces.get(piece)["img"]).convert()
+					self.blackpieces.get(piece)["obj"] = pygame.image.load(self.blackpieces.get(piece)["img"]).convert_alpha()
 					self.blackpieces.get(piece)["obj_rect"] = self.blackpieces.get(piece)["obj"].get_rect()
 					#imgsize = imgwidth, imgheight = self.blackpieces.get(piece)["obj_rect"].width, self.blackpieces.get(piece)["obj_rect"].height
 					self.blackpieces.get(piece)["obj_rect"].centerx = coords[0]
