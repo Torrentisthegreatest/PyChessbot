@@ -5,9 +5,12 @@ import storage
 
 class Game:
 	columnvalues = [61,114,167,220,273,326,379,432] # x-coords for the board's columns
-	rowvalues = [432,379,326,273,220,167,114,61] # y-coords for the board's rows
+	rowvalues = [432,379,326,273,220,167,114,63] # y-coords for the board's rows
 	whitescore = 0
 	blackscore = 0
+	showactions = False
+	pieceactshowed = {}
+	turnowner = "white"
 
 	def __init__(self, configdata):
 		self.GameOn = True
@@ -20,20 +23,47 @@ class Game:
 		self.background = pygame.image.load("assets/chessboard.jpg")
 		self.background = pygame.transform.scale(self.background, self.screensize)
 
+
 		while self.GameOn:
 			self.screen.blit(self.background,(0,0))
 			self.loadpieceimg()
 			for event in pygame.event.get():
 				if event.type == MOUSEBUTTONDOWN and event.button == 1:
 					pos = x,y = pygame.mouse.get_pos()
-					for piece in self.whitepieces:
-						if self.whitepieces.get(piece)["obj_rect"].collidepoint(pos):
-							self.wshowmoves(piece)
-							break
-					for piece in self.blackpieces:
-						if self.blackpieces.get(piece)["obj_rect"].collidepoint(pos):
-							self.bshowmoves(piece)
-							break
+					if self.turnowner == "white":
+						for piece in self.whitepieces:
+							if self.whitepieces.get(piece)["obj_rect"].collidepoint(pos):
+								self.toshow = self.wshowmoves(piece)
+								break
+					if self.turnowner == "black":
+						for piece in self.blackpieces:
+							if self.blackpieces.get(piece)["obj_rect"].collidepoint(pos):
+								self.bshowmoves(piece)
+								break
+					if self.showactions:
+						for action in range(len(self.toshow)):
+							if self.toshow[action]["obj_rect"].collidepoint(pos):
+								if self.pieceactshowed["team"] == "black":
+									newcoord = [self.toshow[action]["coord"][0],self.toshow[action]["coord"][1]]
+									self.blackpieces.get(self.pieceactshowed["name"])["pos"] = newcoord
+									if self.toshow[action]["kill"]:
+										for piece in self.whitepieces:
+											if self.whitepieces.get(piece)["pos"] == newcoord:
+												self.whitepieces.get(piece)["pos"] = None
+												break
+								if self.pieceactshowed["team"] == "white":
+									newcoord = [self.toshow[action]["coord"][0],self.toshow[action]["coord"][1]]
+									self.whitepieces.get(self.pieceactshowed["name"])["pos"] = newcoord
+									if self.toshow[action]["kill"]:
+										for piece in self.blackpieces:
+											if self.blackpieces.get(piece)["pos"] == newcoord:
+												self.blackpieces.get(piece)["pos"] = None
+												break
+								self.showactions = False
+								break
+			if self.showactions:
+				for i in range(len(self.toshow)):
+					self.screen.blit(self.toshow[i]["obj"], self.toshow[i]["pos"])
 					
 			pygame.display.flip()
 	
@@ -42,26 +72,25 @@ class Game:
 		y = self.rowvalues[int(row)]
 		return (x,y)
 
-	def wshowmoves(self, piece):
-		avalspace = pygame.image.load("assets/avalspace.png").convert_alpha()
-		avalspace = avalspace.set_alpha(125)
-		killspace = pygame.image.load("assets/killspace.png").convert_alpha()
-		killspace = killspace.set_alpha(125)
+	def wshowmoves(self, piece): #returns showacts which is set to self.toshow
+		showacts = []
 		actions = self.wavailableactions(piece) #actions = [{pos:(x,y),kill:True/False}]
-		for act in actions:
-			if act["kill"]:
-				act["obj"] = killspace
-				act["obj_rect"] = killspace.get_rect()
+		for actdict in actions:
+			act = actions.index(actdict)
+			if actions[act]["kill"]:
+				actions[act]["obj"] = pygame.image.load("assets/killspace.png").convert_alpha()
+				actions[act]["obj_rect"] = actions[act]["obj"].get_rect()
 			else:
-				act["obj"] = avalspace
-				act["obj_rect"] = avalspace.get_rect()
-			actcenterpos = act["obj_rect"].centerx , act["obj_rect"].centery = self.getposxy(act["pos"][0], act["pos"][1])
-			self.screen.blit(act["obj"], (act["obj_rect"].x,act["obj_rect"].y) )
+				actions[act]["obj"] = pygame.image.load("assets/avalspace.png").convert_alpha()
+				actions[act]["obj_rect"] = actions[act]["obj"].get_rect()
+			actcenterpos = actions[act]["obj_rect"].centerx , actions[act]["obj_rect"].centery = self.getposxy(actions[act]["pos"][0], actions[act]["pos"][1])
+			showacts.append({"obj": actions[act]["obj"], "pos": (actions[act]["obj_rect"].x, actions[act]["obj_rect"].y), "coord": actions[act]["pos"], "obj_rect": actions[act]["obj_rect"], "kill": actions[act]["kill"] })
+		self.showactions = True
+		return showacts
 
 	def wavailableactions(self, piece):
 		type = str(piece)[:1]
 		if type == "p":
-			nonAct = []
 			actions = []
 			fwdactpos = [[self.whitepieces.get(piece)["pos"][0], self.whitepieces.get(piece)["pos"][1]+1]]
 			if self.whitepieces.get(piece)["pos"][1] == 1: #Is pawn in init location
@@ -76,7 +105,7 @@ class Game:
 					break
 			for actpos in fwdactpos:
 				actions.append({"pos": (actpos[0], actpos[1]), "kill": False})
-			diagactpos = [[piece["pos"][0]-1, piece["pos"][1]+1], [piece["pos"][0]+1, piece["pos"][1]+1]] # [x,y]
+			diagactpos = [[self.whitepieces.get(piece)["pos"][0]-1, self.whitepieces.get(piece)["pos"][1]+1], [self.whitepieces.get(piece)["pos"][0]+1, self.whitepieces.get(piece)["pos"][1]+1]] # [x,y]
 			for targetP in self.whitepieces:
 				if self.whitepieces.get(targetP)["pos"] in diagactpos:
 					diagactpos.pop(diagactpos.index(self.whitepieces.get(targetP)["pos"]))
@@ -85,6 +114,7 @@ class Game:
 				if self.blackpieces.get(targetP)["pos"] in diagactpos:
 					actions.append({"pos": self.blackpieces.get(targetP)["pos"], "kill": True})
 					break
+			self.pieceactshowed = {"name": str(piece), "team": "white"}
 			return actions
 		elif type == "b":
 			return "bishop"
@@ -168,13 +198,13 @@ class Game:
 	}
 
 	def whiteisalive(self, piece):
-		if self.whitepieces[piece] == None:
+		if self.whitepieces.get(piece)["pos"] == None:
 			return False
 		else:
 			return True
 
 	def blackisalive(self, piece):
-		if self.blackpieces[piece] == None:
+		if self.blackpieces.get(piece)["pos"] == None:
 			return False
 		else:
 			return True
