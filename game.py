@@ -105,15 +105,16 @@ class Game:
 					break
 			for actpos in fwdactpos:
 				actions.append({"pos": (actpos[0], actpos[1]), "kill": False})
-			diagactpos = [[self.whitepieces.get(piece)["pos"][0]-1, self.whitepieces.get(piece)["pos"][1]+1], [self.whitepieces.get(piece)["pos"][0]+1, self.whitepieces.get(piece)["pos"][1]+1]] # [x,y]
+			diagactpos = [
+						[self.whitepieces.get(piece)["pos"][0]-1, self.whitepieces.get(piece)["pos"][1]+1],
+						[self.whitepieces.get(piece)["pos"][0]+1, self.whitepieces.get(piece)["pos"][1]+1]
+						]
 			for targetP in self.whitepieces:
 				if self.whitepieces.get(targetP)["pos"] in diagactpos:
 					diagactpos.pop(diagactpos.index(self.whitepieces.get(targetP)["pos"]))
-					break
 			for targetP in self.blackpieces:
 				if self.blackpieces.get(targetP)["pos"] in diagactpos:
 					actions.append({"pos": self.blackpieces.get(targetP)["pos"], "kill": True})
-					break
 			self.pieceactshowed = {"name": str(piece), "team": "white"}
 			return actions
 		elif type == "b":
