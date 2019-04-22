@@ -9,8 +9,8 @@ class Game:
 	whitescore = 0
 	blackscore = 0
 	showactions = False
-	pieceactshowed = {}
-	turnowner = "white"
+	turnowner = "w"
+	pieceactshowed = ""
 
 	def __init__(self, configdata):
 		self.GameOn = True
@@ -30,35 +30,21 @@ class Game:
 			for event in pygame.event.get():
 				if event.type == MOUSEBUTTONDOWN and event.button == 1:
 					pos = x,y = pygame.mouse.get_pos()
-					if self.turnowner == "white":
-						for piece in self.whitepieces:
-							if self.whitepieces.get(piece)["obj_rect"].collidepoint(pos):
-								self.toshow = self.wshowmoves(piece)
-								break
-					if self.turnowner == "black":
-						for piece in self.blackpieces:
-							if self.blackpieces.get(piece)["obj_rect"].collidepoint(pos):
-								self.bshowmoves(piece)
+					for piece in self.pieces:
+						if 1:#self.teaminturn(piece):
+							if self.pieces.get(piece)["obj_rect"].collidepoint(pos):
+								self.toshow = self.showmoves(piece)
 								break
 					if self.showactions:
 						for action in range(len(self.toshow)):
 							if self.toshow[action]["obj_rect"].collidepoint(pos):
-								if self.pieceactshowed["team"] == "black":
-									newcoord = [self.toshow[action]["coord"][0],self.toshow[action]["coord"][1]]
-									self.blackpieces.get(self.pieceactshowed["name"])["pos"] = newcoord
-									if self.toshow[action]["kill"]:
-										for piece in self.whitepieces:
-											if self.whitepieces.get(piece)["pos"] == newcoord:
-												self.whitepieces.get(piece)["pos"] = None
-												break
-								if self.pieceactshowed["team"] == "white":
-									newcoord = [self.toshow[action]["coord"][0],self.toshow[action]["coord"][1]]
-									self.whitepieces.get(self.pieceactshowed["name"])["pos"] = newcoord
-									if self.toshow[action]["kill"]:
-										for piece in self.blackpieces:
-											if self.blackpieces.get(piece)["pos"] == newcoord:
-												self.blackpieces.get(piece)["pos"] = None
-												break
+								newcoord = [self.toshow[action]["coord"][0],self.toshow[action]["coord"][1]]
+								self.pieces.get(self.pieceactshowed)["pos"] = newcoord
+								if self.toshow[action]["kill"]:
+									for piece in self.pieces:
+										if self.pieces.get(piece)["pos"] == newcoord:
+											self.pieces.get(piece)["pos"] = None
+											break
 								self.showactions = False
 								break
 			if self.showactions:
@@ -72,9 +58,9 @@ class Game:
 		y = self.rowvalues[int(row)]
 		return (x,y)
 
-	def wshowmoves(self, piece): #returns showacts which is set to self.toshow
+	def showmoves(self, piece): #returns showacts which is set to self.toshow
 		showacts = []
-		actions = self.wavailableactions(piece) #actions = [{pos:(x,y),kill:True/False}]
+		actions = self.availableactions(piece) #actions = [{pos:(x,y),kill:True/False}]
 		for actdict in actions:
 			act = actions.index(actdict)
 			if actions[act]["kill"]:
@@ -88,34 +74,44 @@ class Game:
 		self.showactions = True
 		return showacts
 
-	def wavailableactions(self, piece):
-		type = str(piece)[:1]
-		if type == "p":
+	def availableactions(self, piece):
+		type = str(piece)
+		if type[1:2] == "p":
+			badj = 1
+			if type[:1] == "b":
+				badj = -1
 			actions = []
-			fwdactpos = [[self.whitepieces.get(piece)["pos"][0], self.whitepieces.get(piece)["pos"][1]+1]]
-			if self.whitepieces.get(piece)["pos"][1] == 1: #Is pawn in init location
-				fwdactpos.append([self.whitepieces.get(piece)["pos"][0], self.whitepieces.get(piece)["pos"][1]+2])
-			for targetP in self.whitepieces:
-				if self.whitepieces.get(targetP)["pos"] in fwdactpos:
-					fwdactpos.pop(fwdactpos.index(self.whitepieces.get(targetP)["pos"]))
-					break
-			for targetP in self.blackpieces:
-				if self.blackpieces.get(targetP)["pos"] in fwdactpos:
-					fwdactpos.pop(fwdactpos.index(self.blackpieces.get(targetP)["pos"]))
+			fwdactpos = [[self.pieces.get(piece)["pos"][0], self.pieces.get(piece)["pos"][1]+(1*badj)]]
+			if (self.pieces.get(piece)["pos"][1] == 1 and str(piece)[:1] == "w") or (self.pieces.get(piece)["pos"][1] == 6 and str(piece)[:1] == "b"): #Is pawn in init location
+				fwdactpos.append([self.pieces.get(piece)["pos"][0], self.pieces.get(piece)["pos"][1]+(2*badj)])
+			for targetP in self.pieces:
+				if self.pieces.get(targetP)["pos"] in fwdactpos:
+					if self.pieces.get(piece)["pos"][1] + (1*badj) == self.pieces.get(targetP)["pos"]:
+						fwdactpos = []
+						break
+					else:
+						fwdactpos.pop(fwdactpos.index(self.pieces.get(targetP)["pos"]))
+						break
+			for targetP in self.pieces:
+				if self.pieces.get(targetP)["pos"] in fwdactpos:
+					if self.pieces.get(piece)["pos"][1] + (1*badj) == self.pieces.get(targetP)["pos"]:
+						fwdactpos.clear()
+					else:
+						fwdactpos.pop(fwdactpos.index(self.pieces.get(targetP)["pos"]))
 					break
 			for actpos in fwdactpos:
 				actions.append({"pos": (actpos[0], actpos[1]), "kill": False})
 			diagactpos = [
-						[self.whitepieces.get(piece)["pos"][0]-1, self.whitepieces.get(piece)["pos"][1]+1],
-						[self.whitepieces.get(piece)["pos"][0]+1, self.whitepieces.get(piece)["pos"][1]+1]
+						[self.pieces.get(piece)["pos"][0]-1, self.pieces.get(piece)["pos"][1]+(1*badj)],
+						[self.pieces.get(piece)["pos"][0]+1, self.pieces.get(piece)["pos"][1]+(1*badj)]
 						]
-			for targetP in self.whitepieces:
-				if self.whitepieces.get(targetP)["pos"] in diagactpos:
-					diagactpos.pop(diagactpos.index(self.whitepieces.get(targetP)["pos"]))
-			for targetP in self.blackpieces:
-				if self.blackpieces.get(targetP)["pos"] in diagactpos:
-					actions.append({"pos": self.blackpieces.get(targetP)["pos"], "kill": True})
-			self.pieceactshowed = {"name": str(piece), "team": "white"}
+			for targetP in self.pieces:
+				if self.pieces.get(targetP)["pos"] in diagactpos:
+					diagactpos.pop(diagactpos.index(self.pieces.get(targetP)["pos"]))
+			for targetP in self.pieces:
+				if self.pieces.get(targetP)["pos"] in diagactpos:
+					actions.append({"pos": self.pieces.get(targetP)["pos"], "kill": True})
+			self.pieceactshowed = str(piece)
 			return actions
 		elif type == "b":
 			return "bishop"
@@ -130,83 +126,81 @@ class Game:
 		else:
 			raise Exception("White Available Actions: ", "Invalid piece type")
 
+	def teaminturn(self, piece):
+		if str(piece)[1:] == "K" or str(piece)[:1] == "Q":
+			if str(piece)[:1] == self.turnowner:
+				return True
+		elif str(piece)[:1] == self.turnowner:
+			return True
+		else:
+			return False
+
 	def loadpieceimg(self):
 
 			#Starting with White Pieces that are alive
-			for piece in self.whitepieces:
-				if self.whiteisalive(piece):
-					sqcord = self.whitepieces.get(piece)["pos"]
+			for piece in self.pieces:
+				if self.isalive(piece):
+					sqcord = self.pieces.get(piece)["pos"]
 					coords = self.getposxy(sqcord[0], sqcord[1])
-					self.whitepieces.get(piece)["obj"] = pygame.image.load(self.whitepieces.get(piece)["img"]).convert_alpha()
-					self.whitepieces.get(piece)["obj_rect"] = self.whitepieces.get(piece)["obj"].get_rect()
-					#imgsize = imgwidth, imgheight = self.whitepieces.get(piece)["obj_rect"].width, self.whitepieces.get(piece)["obj_rect"].height
-					self.whitepieces.get(piece)["obj_rect"].centerx = coords[0]
-					self.whitepieces.get(piece)["obj_rect"].centery = coords[1]
-					rectcoords = rectx, recty = self.whitepieces.get(piece)["obj_rect"].x, self.whitepieces.get(piece)["obj_rect"].y
-					self.screen.blit(self.whitepieces.get(piece)["obj"], (rectx, recty) )
+					self.pieces.get(piece)["obj"] = pygame.image.load(self.pieces.get(piece)["img"]).convert_alpha()
+					self.pieces.get(piece)["obj_rect"] = self.pieces.get(piece)["obj"].get_rect()
+					self.pieces.get(piece)["obj_rect"].centerx = coords[0]
+					self.pieces.get(piece)["obj_rect"].centery = coords[1]
+					rectcoords = rectx, recty = self.pieces.get(piece)["obj_rect"].x, self.pieces.get(piece)["obj_rect"].y
+					self.screen.blit(self.pieces.get(piece)["obj"], (rectx, recty) )
 
+			#
+			# #Starting with Black Pieces that are alive
+			# for piece in self.pieces:
+			# 	if self.isalive(piece):
+			# 		sqcord = self.pieces.get(piece)["pos"]
+			# 		coords = self.getposxy(sqcord[0], sqcord[1])
+			# 		self.pieces.get(piece)["obj"] = pygame.image.load(self.pieces.get(piece)["img"]).convert_alpha()
+			# 		self.pieces.get(piece)["obj_rect"] = self.pieces.get(piece)["obj"].get_rect()
+			# 		self.pieces.get(piece)["obj_rect"].centerx = coords[0]
+			# 		self.pieces.get(piece)["obj_rect"].centery = coords[1]
+			# 		rectcoords = rectx, recty = self.pieces.get(piece)["obj_rect"].x, self.pieces.get(piece)["obj_rect"].y
+			# 		self.screen.blit(self.pieces.get(piece)["obj"], (rectx, recty) )
+			#
 
-			#Starting with Black Pieces that are alive
-			for piece in self.blackpieces:
-				if self.blackisalive(piece):
-					sqcord = self.blackpieces.get(piece)["pos"]
-					coords = self.getposxy(sqcord[0], sqcord[1])
-					self.blackpieces.get(piece)["obj"] = pygame.image.load(self.blackpieces.get(piece)["img"]).convert_alpha()
-					self.blackpieces.get(piece)["obj_rect"] = self.blackpieces.get(piece)["obj"].get_rect()
-					#imgsize = imgwidth, imgheight = self.blackpieces.get(piece)["obj_rect"].width, self.blackpieces.get(piece)["obj_rect"].height
-					self.blackpieces.get(piece)["obj_rect"].centerx = coords[0]
-					self.blackpieces.get(piece)["obj_rect"].centery = coords[1]
-					rectcoords = rectx, recty = self.blackpieces.get(piece)["obj_rect"].x, self.blackpieces.get(piece)["obj_rect"].y
-					self.screen.blit(self.blackpieces.get(piece)["obj"], (rectx, recty) )
-			
+	pieces = {
+		"wp1":{"pos":[0,1], "img":"assets/wpawn.png"},
+		"wp2":{"pos":[1,1], "img":"assets/wpawn.png"},
+		"wp3":{"pos":[2,1], "img":"assets/wpawn.png"},
+		"wp4":{"pos":[3,1], "img":"assets/wpawn.png"},
+		"wp5":{"pos":[4,1], "img":"assets/wpawn.png"},
+		"wp6":{"pos":[5,1], "img":"assets/wpawn.png"},
+		"wp7":{"pos":[6,1], "img":"assets/wpawn.png"},
+		"wp8":{"pos":[7,1], "img":"assets/wpawn.png"},
+		"wb1":{"pos":[2,0], "img":"assets/wbishop.png"},
+		"wb2":{"pos":[5,0], "img":"assets/wbishop.png"},
+		"wk1":{"pos":[1,0], "img":"assets/wknight.png"},
+		"wr1":{"pos":[0,0], "img":"assets/wrook.png"},
+		"wk2":{"pos":[6,0], "img":"assets/wknight.png"},
+		"wr2":{"pos":[7,0], "img":"assets/wrook.png"},
+		"wK":{"pos":[4,0], "img":"assets/wking.png"},
+		"wQ":{"pos":[3,0], "img":"assets/wqueen.png"},
 
-	whitepieces = {
-		"p1":{"pos":[0,1], "img":"assets/wpawn.png"},
-		"p2":{"pos":[1,1], "img":"assets/wpawn.png"},
-		"p3":{"pos":[2,1], "img":"assets/wpawn.png"},
-		"p4":{"pos":[3,1], "img":"assets/wpawn.png"},
-		"p5":{"pos":[4,1], "img":"assets/wpawn.png"},
-		"p6":{"pos":[5,1], "img":"assets/wpawn.png"},
-		"p7":{"pos":[6,1], "img":"assets/wpawn.png"},
-		"p8":{"pos":[7,1], "img":"assets/wpawn.png"},
-		"b1":{"pos":[2,0], "img":"assets/wbishop.png"},
-		"b2":{"pos":[5,0], "img":"assets/wbishop.png"},
-		"k1":{"pos":[1,0], "img":"assets/wknight.png"},
-		"k2":{"pos":[6,0], "img":"assets/wknight.png"},
-		"r1":{"pos":[0,0], "img":"assets/wrook.png"},
-		"r2":{"pos":[7,0], "img":"assets/wrook.png"},
-		"K":{"pos":[4,0], "img":"assets/wking.png"},
-		"Q":{"pos":[3,0], "img":"assets/wqueen.png"}
+		"bp1":{"pos":[0,6], "img":"assets/bpawn.png"},
+		"bp2":{"pos":[1,6], "img":"assets/bpawn.png"},
+		"bp3":{"pos":[2,6], "img":"assets/bpawn.png"},
+		"bp4":{"pos":[3,6], "img":"assets/bpawn.png"},
+		"bp5":{"pos":[4,6], "img":"assets/bpawn.png"},
+		"bp6":{"pos":[5,6], "img":"assets/bpawn.png"},
+		"bp7":{"pos":[6,6], "img":"assets/bpawn.png"},
+		"bp8":{"pos":[7,6], "img":"assets/bpawn.png"},
+		"bb1":{"pos":[2,7], "img":"assets/bbishop.png"},
+		"bb2":{"pos":[5,7], "img":"assets/bbishop.png"},
+		"bk1":{"pos":[1,7], "img":"assets/bknight.png"},
+		"bk2":{"pos":[6,7], "img":"assets/bknight.png"},
+		"br1":{"pos":[0,7], "img":"assets/brook.png"},
+		"br2":{"pos":[7,7], "img":"assets/brook.png"},
+		"bK":{"pos":[4,7], "img":"assets/bking.png"},
+		"bQ":{"pos":[3,7], "img":"assets/bqueen.png"}
 	}
 
-	blackpieces = {
-		"p1":{"pos":[0,6], "img":"assets/bpawn.png"},
-		"p2":{"pos":[1,6], "img":"assets/bpawn.png"},
-		"p3":{"pos":[2,6], "img":"assets/bpawn.png"},
-		"p4":{"pos":[3,6], "img":"assets/bpawn.png"},
-		"p5":{"pos":[4,6], "img":"assets/bpawn.png"},
-		"p6":{"pos":[5,6], "img":"assets/bpawn.png"},
-		"p7":{"pos":[6,6], "img":"assets/bpawn.png"},
-		"p8":{"pos":[7,6], "img":"assets/bpawn.png"},
-		"b1":{"pos":[2,7], "img":"assets/bbishop.png"},
-		"b2":{"pos":[5,7], "img":"assets/bbishop.png"},
-		"k1":{"pos":[1,7], "img":"assets/bknight.png"},
-		"k2":{"pos":[6,7], "img":"assets/bknight.png"},
-		"r1":{"pos":[0,7], "img":"assets/brook.png"},
-		"r2":{"pos":[7,7], "img":"assets/brook.png"},
-		"K":{"pos":[4,7], "img":"assets/bking.png"},
-		"Q":{"pos":[3,7], "img":"assets/bqueen.png"}
-	}
-
-	def whiteisalive(self, piece):
-		if self.whitepieces.get(piece)["pos"] == None:
+	def isalive(self, piece):
+		if self.pieces.get(piece)["pos"] is None:
 			return False
 		else:
 			return True
-
-	def blackisalive(self, piece):
-		if self.blackpieces.get(piece)["pos"] == None:
-			return False
-		else:
-			return True
-
