@@ -33,27 +33,25 @@ class Game:
 		while self.GameOn:
 			self.screen.blit(self.background,(0,0))
 			self.loadpieceimg()
-			for event in pygame.event.get():
-				if event.type == MOUSEBUTTONDOWN and event.button == 1:
-					pos = x,y = pygame.mouse.get_pos()
-					for piece in self.pieces:
-						if self.teaminturn(piece) and self.pieces.get(piece)["obj_rect"].collidepoint(pos) and self.pieces.get(piece)["pos"] is not None:
-							self.toshow = self.showmoves(piece)
-							break
-					if self.showactions:
-						for action in range(len(self.toshow)):
-							if self.toshow[action]["obj_rect"].collidepoint(pos):
-								newcoord = [self.toshow[action]["coord"][0],self.toshow[action]["coord"][1]]
-								if self.toshow[action]["kill"]:
-									for piece in self.pieces:
-										if self.pieces.get(piece)["pos"] == newcoord:
-											self.pieces.get(piece)["pos"] = None
-											self.addscore(self.turnowner, piece)
-											break
-								self.pieces.get(self.pieceactshowed)["pos"] = newcoord
-								self.switchteams()
-								self.showactions = False
-								break
+			for event in (event for event in pygame.event.get() if event.type == MOUSEBUTTONDOWN and event.button == 1):
+				pos = x,y = pygame.mouse.get_pos()
+				for piece in self.pieces:
+					if self.teaminturn(piece) and self.pieces.get(piece)["obj_rect"].collidepoint(pos) and self.pieces.get(piece)["pos"] is not None:
+						self.toshow = self.showmoves(piece)
+						break
+				if self.showactions in filter(lambda action : self.toshow[action]["obj_rect"].collidepoint(pos), range(self.toshow)):
+					if self.toshow[action]["obj_rect"].collidepoint(pos):
+						newcoord = [self.toshow[action]["coord"][0],self.toshow[action]["coord"][1]]
+						if self.toshow[action]["kill"]:
+							for piece in self.pieces:
+								if self.pieces.get(piece)["pos"] == newcoord:
+									self.pieces.get(piece)["pos"] = None
+									self.addscore(self.turnowner, piece)
+									break
+						self.pieces.get(self.pieceactshowed)["pos"] = newcoord
+						self.switchteams()
+						self.showactions = False
+						break
 			if self.showactions:
 				for i in range(len(self.toshow)):
 					self.screen.blit(self.toshow[i]["obj"], self.toshow[i]["pos"])
@@ -67,9 +65,13 @@ class Game:
 			self.turnowner = "w"
 
 	def getposxy(self, col, row): #returns tuple
-		x = self.columnvalues[int(col)]
-		y = self.rowvalues[int(row)]
-		return (x,y)
+		try:
+			x = self.columnvalues[int(col)]
+			y = self.rowvalues[int(row)]
+		except IndexError:
+			x,y = None,None
+		finally:	
+			return (x,y)
 
 	def showmoves(self, piece): #returns showacts which is set to self.toshow
 		showacts = []
@@ -82,8 +84,9 @@ class Game:
 			else:
 				actions[act]["obj"] = pygame.image.load("assets/avalspace.png").convert_alpha()
 				actions[act]["obj_rect"] = actions[act]["obj"].get_rect()
-			actcenterpos = actions[act]["obj_rect"].centerx , actions[act]["obj_rect"].centery = self.getposxy(actions[act]["pos"][0], actions[act]["pos"][1])
-			showacts.append({"obj": actions[act]["obj"], "pos": (actions[act]["obj_rect"].x, actions[act]["obj_rect"].y), "coord": actions[act]["pos"], "obj_rect": actions[act]["obj_rect"], "kill": actions[act]["kill"] })
+			if self.getposxy(actions[act]["pos"][0] is None:
+				actions[act]["obj_rect"].centerx , actions[act]["obj_rect"].centery = self.getposxy(actions[act]["pos"][0], actions[act]["pos"][1])
+				showacts.append({"obj": actions[act]["obj"], "pos": (actions[act]["obj_rect"].x, actions[act]["obj_rect"].y), "coord": actions[act]["pos"], "obj_rect": actions[act]["obj_rect"], "kill": actions[act]["kill"] })
 		self.showactions = True
 		return showacts
 
