@@ -11,10 +11,16 @@ class Game:
 	showactions = False
 	turnowner = "w"
 	pieceactshowed = ""
+	score = {"w":0,"b":0}
+	
+	def addscore(self, team, ptaken):
+		self.score[str(team)] += int(self.pvalues[str(ptaken[1:2])])
+		print(self.score)
 
 	def __init__(self, configdata):
 		self.GameOn = True
 		self.config = configdata
+		self.pvalues = self.config["PIECEVALUES"]
 		self.screensize = self.width, self.height = 500, 500
 		pygame.init()
 		self.screen = pygame.display.set_mode(self.screensize)
@@ -31,20 +37,21 @@ class Game:
 				if event.type == MOUSEBUTTONDOWN and event.button == 1:
 					pos = x,y = pygame.mouse.get_pos()
 					for piece in self.pieces:
-						if 1:#self.teaminturn(piece):
-							if self.pieces.get(piece)["obj_rect"].collidepoint(pos):
-								self.toshow = self.showmoves(piece)
-								break
+						if self.teaminturn(piece) and self.pieces.get(piece)["obj_rect"].collidepoint(pos) and self.pieces.get(piece)["pos"] is not None:
+							self.toshow = self.showmoves(piece)
+							break
 					if self.showactions:
 						for action in range(len(self.toshow)):
 							if self.toshow[action]["obj_rect"].collidepoint(pos):
 								newcoord = [self.toshow[action]["coord"][0],self.toshow[action]["coord"][1]]
-								self.pieces.get(self.pieceactshowed)["pos"] = newcoord
 								if self.toshow[action]["kill"]:
 									for piece in self.pieces:
 										if self.pieces.get(piece)["pos"] == newcoord:
 											self.pieces.get(piece)["pos"] = None
+											self.addscore(self.turnowner, piece)
 											break
+								self.pieces.get(self.pieceactshowed)["pos"] = newcoord
+								self.switchteams()
 								self.showactions = False
 								break
 			if self.showactions:
@@ -53,6 +60,12 @@ class Game:
 					
 			pygame.display.flip()
 	
+	def switchteams(self):
+		if self.turnowner == "w":
+			self.turnowner = "b"
+		elif self.turnowner == "b":
+			self.turnowner = "w"
+
 	def getposxy(self, col, row): #returns tuple
 		x = self.columnvalues[int(col)]
 		y = self.rowvalues[int(row)]
@@ -106,10 +119,10 @@ class Game:
 						[self.pieces.get(piece)["pos"][0]+1, self.pieces.get(piece)["pos"][1]+(1*badj)]
 						]
 			for targetP in self.pieces:
-				if self.pieces.get(targetP)["pos"] in diagactpos:
+				if self.pieces.get(targetP)["pos"] in diagactpos and str(targetP)[:1] == self.turnowner:
 					diagactpos.pop(diagactpos.index(self.pieces.get(targetP)["pos"]))
 			for targetP in self.pieces:
-				if self.pieces.get(targetP)["pos"] in diagactpos:
+				if self.pieces.get(targetP)["pos"] in diagactpos and str(targetP)[:1] != self.turnowner:
 					actions.append({"pos": self.pieces.get(targetP)["pos"], "kill": True})
 			self.pieceactshowed = str(piece)
 			return actions
@@ -127,10 +140,7 @@ class Game:
 			raise Exception("White Available Actions: ", "Invalid piece type")
 
 	def teaminturn(self, piece):
-		if str(piece)[1:] == "K" or str(piece)[:1] == "Q":
-			if str(piece)[:1] == self.turnowner:
-				return True
-		elif str(piece)[:1] == self.turnowner:
+		if str(piece)[:1] == self.turnowner:
 			return True
 		else:
 			return False
@@ -149,20 +159,6 @@ class Game:
 					rectcoords = rectx, recty = self.pieces.get(piece)["obj_rect"].x, self.pieces.get(piece)["obj_rect"].y
 					self.screen.blit(self.pieces.get(piece)["obj"], (rectx, recty) )
 
-			#
-			# #Starting with Black Pieces that are alive
-			# for piece in self.pieces:
-			# 	if self.isalive(piece):
-			# 		sqcord = self.pieces.get(piece)["pos"]
-			# 		coords = self.getposxy(sqcord[0], sqcord[1])
-			# 		self.pieces.get(piece)["obj"] = pygame.image.load(self.pieces.get(piece)["img"]).convert_alpha()
-			# 		self.pieces.get(piece)["obj_rect"] = self.pieces.get(piece)["obj"].get_rect()
-			# 		self.pieces.get(piece)["obj_rect"].centerx = coords[0]
-			# 		self.pieces.get(piece)["obj_rect"].centery = coords[1]
-			# 		rectcoords = rectx, recty = self.pieces.get(piece)["obj_rect"].x, self.pieces.get(piece)["obj_rect"].y
-			# 		self.screen.blit(self.pieces.get(piece)["obj"], (rectx, recty) )
-			#
-
 	pieces = {
 		"wp1":{"pos":[0,1], "img":"assets/wpawn.png"},
 		"wp2":{"pos":[1,1], "img":"assets/wpawn.png"},
@@ -178,8 +174,8 @@ class Game:
 		"wr1":{"pos":[0,0], "img":"assets/wrook.png"},
 		"wk2":{"pos":[6,0], "img":"assets/wknight.png"},
 		"wr2":{"pos":[7,0], "img":"assets/wrook.png"},
-		"wK":{"pos":[4,0], "img":"assets/wking.png"},
-		"wQ":{"pos":[3,0], "img":"assets/wqueen.png"},
+		"wK_":{"pos":[4,0], "img":"assets/wking.png"},
+		"wQ_":{"pos":[3,0], "img":"assets/wqueen.png"},
 
 		"bp1":{"pos":[0,6], "img":"assets/bpawn.png"},
 		"bp2":{"pos":[1,6], "img":"assets/bpawn.png"},
@@ -195,8 +191,8 @@ class Game:
 		"bk2":{"pos":[6,7], "img":"assets/bknight.png"},
 		"br1":{"pos":[0,7], "img":"assets/brook.png"},
 		"br2":{"pos":[7,7], "img":"assets/brook.png"},
-		"bK":{"pos":[4,7], "img":"assets/bking.png"},
-		"bQ":{"pos":[3,7], "img":"assets/bqueen.png"}
+		"bK_":{"pos":[4,7], "img":"assets/bking.png"},
+		"bQ_":{"pos":[3,7], "img":"assets/bqueen.png"}
 	}
 
 	def isalive(self, piece):
