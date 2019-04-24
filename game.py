@@ -12,10 +12,21 @@ class Game:
 	turnowner = "w"
 	pieceactshowed = ""
 	score = {"w":0,"b":0}
+	texttoshow = {"W Score: ":True,"B Score: ":True}
 	
 	def addscore(self, team, ptaken):
 		self.score[str(team)] += int(self.pvalues[str(ptaken[1:2])])
 		print(self.score)
+
+	def text_display(self, text, xpos, ypos, size):
+		largeText = pygame.font.Font('freesansbold.ttf', size)
+		TextSurf, TextRect = self.text_objects(text, largeText)
+		TextRect.center = (xpos,ypos)
+		self.screen.blit(TextSurf, TextRect)
+
+	def text_objects(self, text, font):
+		textSurface = font.render(text, True, (0,255,0))
+		return textSurface, textSurface.get_rect()
 
 	def __init__(self, configdata):
 		self.GameOn = True
@@ -39,23 +50,28 @@ class Game:
 					if self.teaminturn(piece) and self.pieces.get(piece)["obj_rect"].collidepoint(pos) and self.pieces.get(piece)["pos"] is not None:
 						self.toshow = self.showmoves(piece)
 						break
-				if self.showactions in filter(lambda action : self.toshow[action]["obj_rect"].collidepoint(pos), range(self.toshow)):
-					if self.toshow[action]["obj_rect"].collidepoint(pos):
-						newcoord = [self.toshow[action]["coord"][0],self.toshow[action]["coord"][1]]
-						if self.toshow[action]["kill"]:
-							for piece in self.pieces:
-								if self.pieces.get(piece)["pos"] == newcoord:
-									self.pieces.get(piece)["pos"] = None
-									self.addscore(self.turnowner, piece)
-									break
-						self.pieces.get(self.pieceactshowed)["pos"] = newcoord
-						self.switchteams()
-						self.showactions = False
-						break
+				if self.showactions:
+					for action in filter(lambda action : self.toshow[action]["obj_rect"].collidepoint(pos), range(len(self.toshow))):
+						if self.toshow[action]["obj_rect"].collidepoint(pos):
+							newcoord = [self.toshow[action]["coord"][0],self.toshow[action]["coord"][1]]
+							if self.toshow[action]["kill"]:
+								for piece in self.pieces:
+									if self.pieces.get(piece)["pos"] == newcoord:
+										self.pieces.get(piece)["pos"] = None
+										self.addscore(self.turnowner, piece)
+										break
+							self.pieces.get(self.pieceactshowed)["pos"] = newcoord
+							self.switchteams()
+							self.showactions = False
+							break
 			if self.showactions:
 				for i in range(len(self.toshow)):
 					self.screen.blit(self.toshow[i]["obj"], self.toshow[i]["pos"])
-					
+			for txt in filter(lambda txt: self.texttoshow[txt] is True, self.texttoshow):
+				if txt[:1] == "W":
+					self.text_display((txt+str(self.score["w"])),60,20,20)
+				elif txt[:1] == "B":
+					self.text_display((txt+str(self.score["b"])),420,20,20)
 			pygame.display.flip()
 	
 	def switchteams(self):
@@ -84,10 +100,13 @@ class Game:
 			else:
 				actions[act]["obj"] = pygame.image.load("assets/avalspace.png").convert_alpha()
 				actions[act]["obj_rect"] = actions[act]["obj"].get_rect()
-			if self.getposxy(actions[act]["pos"][0] is None:
+			try:
 				actions[act]["obj_rect"].centerx , actions[act]["obj_rect"].centery = self.getposxy(actions[act]["pos"][0], actions[act]["pos"][1])
 				showacts.append({"obj": actions[act]["obj"], "pos": (actions[act]["obj_rect"].x, actions[act]["obj_rect"].y), "coord": actions[act]["pos"], "obj_rect": actions[act]["obj_rect"], "kill": actions[act]["kill"] })
-		self.showactions = True
+			except TypeError:
+				pass #if pawn @ far end set pawn to other piece
+		if len(showacts) > 0:
+			self.showactions = True
 		return showacts
 
 	def availableactions(self, piece):
@@ -129,15 +148,52 @@ class Game:
 					actions.append({"pos": self.pieces.get(targetP)["pos"], "kill": True})
 			self.pieceactshowed = str(piece)
 			return actions
-		elif type == "b":
-			return "bishop"
-		elif type == "k":
+		elif type[1:2] == "b":
+			actions = []
+			diagactpospp=[]
+			diagactposnp=[]
+			diagactpospn=[]
+			diagactposnn=[]
+			strtx,strty = self.pieces.get(piece)["pos"]
+			x = strtx
+			y = strty
+			while self.getposxy(x+1,y+1):
+				diagactpospp.append([x+1,y+1])
+				x+=1
+				y+=1
+			while self.getposxy(x-1,y+1):
+				diagactposnp.append([x-1,y+1])
+				x-=1
+				y+=1
+			while self.getposxy(x-1,y-1):
+				diagactposnn.append([x-1,y-1])
+				x-=1
+				y-=1
+			while self.getposxy(x+1,y-1):
+				diagactpospn.append([x+1,y-1])
+				x+=1
+				y-=1
+			diagactpos = [diagactpospp,diagactposnp,diagactposnn,diagactpospn]
+			for dactpos in diagactpos:
+				for actpos in range(dactpos):
+					for targetP in filter(lambda targetP : self.pieces.get(targetP)["pos"] == dactpos[actpos], self.pieces):
+						if str(targetP)[:1] == self.turnowner:
+							for i in range(actpos, len(dactpos)):
+								diagactpos[diagactpos.index(dactpos)].pop(i)
+						else:
+							actions.append({"pos": self.pieces.get(targetP)["pos"], "kill": True})
+					else:
+						actions.append({"pos": self.pieces.get(targetP)["pos"], "kill": False})
+			if len(actions)>0:
+				self.pieceactshowed = str(piece)
+			return actions
+		elif type[1:2] == "k":
 			return "knight"
-		elif type == "r":
+		elif type[1:2] == "r":
 			return "rook"
-		elif type == "K":
+		elif type[1:2] == "K":
 			return "King"
-		elif type == "Q":
+		elif type[1:2] == "Q":
 			return "Queen"
 		else:
 			raise Exception("White Available Actions: ", "Invalid piece type")
