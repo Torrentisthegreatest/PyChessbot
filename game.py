@@ -81,6 +81,8 @@ class Game:
 			self.turnowner = "w"
 
 	def getposxy(self, col, row): #returns tuple
+		if col<0 or row<0:
+			return None,None
 		try:
 			x = self.columnvalues[int(col)]
 			y = self.rowvalues[int(row)]
@@ -157,35 +159,53 @@ class Game:
 			strtx,strty = self.pieces.get(piece)["pos"]
 			x = strtx
 			y = strty
-			while self.getposxy(x+1,y+1):
+			while self.getposxy(x+1,y+1)[0] != None and self.getposxy(x+1,y+1)[1] != None:
 				diagactpospp.append([x+1,y+1])
 				x+=1
 				y+=1
-			while self.getposxy(x-1,y+1):
+			x = strtx
+			y = strty
+			while self.getposxy(x-1,y+1)[0] != None and self.getposxy(x-1,y+1)[1] != None:
 				diagactposnp.append([x-1,y+1])
 				x-=1
 				y+=1
-			while self.getposxy(x-1,y-1):
+			x = strtx
+			y = strty
+			while self.getposxy(x-1,y-1)[0] != None and self.getposxy(x-1,y-1)[1] != None:
 				diagactposnn.append([x-1,y-1])
 				x-=1
 				y-=1
-			while self.getposxy(x+1,y-1):
+			x = strtx
+			y = strty
+			while self.getposxy(x+1,y-1)[0] != None and self.getposxy(x+1,y-1)[1] != None:
 				diagactpospn.append([x+1,y-1])
 				x+=1
 				y-=1
 			diagactpos = [diagactpospp,diagactposnp,diagactposnn,diagactpospn]
 			for dactpos in diagactpos:
-				for actpos in range(dactpos):
-					for targetP in filter(lambda targetP : self.pieces.get(targetP)["pos"] == dactpos[actpos], self.pieces):
-						if str(targetP)[:1] == self.turnowner:
-							for i in range(actpos, len(dactpos)):
-								diagactpos[diagactpos.index(dactpos)].pop(i)
-						else:
-							actions.append({"pos": self.pieces.get(targetP)["pos"], "kill": True})
-					else:
-						actions.append({"pos": self.pieces.get(targetP)["pos"], "kill": False})
-			if len(actions)>0:
-				self.pieceactshowed = str(piece)
+				for actpos in range(len(dactpos)):
+					try:
+						for targetP in filter(lambda targetP : self.pieces.get(targetP)["pos"] == dactpos[actpos], self.pieces):
+							if str(targetP)[:1] == self.turnowner:
+								for i in range(actpos,len(dactpos)):
+									diagactpos[diagactpos.index(dactpos)].pop(actpos)
+							elif str(targetP)[:1] != self.turnowner:
+								actions.append({"pos": self.pieces.get(targetP)["pos"], "kill": True})
+								for i in range(actpos+1,len(dactpos)):
+									diagactpos[diagactpos.index(dactpos)].pop(actpos+1)
+					except IndexError:
+						break
+					try:
+						actions.append({"pos": dactpos[actpos], "kill": False})
+					except IndexError:
+						print(dactpos,actpos) #saw an error once, put this to find it, never found again...
+			self.pieceactshowed = str(piece)
+			for kills in filter(lambda kills : actions[kills]["kill"] == True, range(len(actions))):
+				for i in (i for i in range(len(actions)) if actions[i]["pos"] == actions[kills]["pos"] and i != kills):
+					actions.pop(i)
+					break
+				break
+			print(actions)
 			return actions
 		elif type[1:2] == "k":
 			return "knight"
