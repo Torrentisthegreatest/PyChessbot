@@ -14,7 +14,7 @@ class Game:
 	score = {"w":0,"b":0}
 	texttoshow = {"W Score: ":True,"B Score: ":True}
 	teamincheck = None # "w" or "b"
-	
+
 	def addscore(self, team, ptaken):
 		self.score[str(team)] += int(self.pvalues[str(ptaken[1:2])])
 		print(self.score)
@@ -37,7 +37,7 @@ class Game:
 		pygame.init()
 		self.screen = pygame.display.set_mode(self.screensize)
 		pygame.display.set_caption('PyChess')
-		
+
 		self.background = pygame.image.load("assets/chessboard.jpg")
 		self.background = pygame.transform.scale(self.background, self.screensize)
 
@@ -79,7 +79,7 @@ class Game:
 				elif txt[:1] == "B":
 					self.text_display((txt+str(self.score["b"])),420,20,20)
 			pygame.display.flip()
-	
+
 	def WinCond(self, winner):
 		teamname = {"w": "White", "b": "Black"}
 		t_end = time.time() + 10
@@ -100,7 +100,7 @@ class Game:
 			y = self.rowvalues[int(row)]
 		except IndexError:
 			x,y = None,None
-		finally:	
+		finally:
 			return (x,y)
 
 	def showmoves(self, piece): #returns showacts which is set to self.toshow
@@ -314,7 +314,105 @@ class Game:
 			self.pieceactshowed = str(piece)
 			return actions
 		elif type[1:2] == "Q":
-			return "Queen"
+			strtx, strty = self.pieces.get(piece)["pos"]
+			sidesactions = []
+			actions = []
+			upactpos = []
+			x = strtx
+			y = strty
+			while self.getposxy(x, y + 1)[1] is not None:
+				upactpos.append([x, y + 1])
+				y += 1
+			y = strty
+			dwnactpos = []
+			while self.getposxy(x, y - 1)[1] is not None:
+				dwnactpos.append([x, y - 1])
+				y -= 1
+			y = strty
+			rgtactpos = []
+			while self.getposxy(x + 1, y)[1] is not None:
+				rgtactpos.append([x + 1, y])
+				x += 1
+			x = strtx
+			lftactpos = []
+			while self.getposxy(x - 1, y)[1] is not None:
+				lftactpos.append([x - 1, y])
+				x -= 1
+			actpos = [upactpos, dwnactpos, rgtactpos, lftactpos]
+			for actdirect in actpos:
+				for a in range(len(actdirect)):
+					try:
+						for targetP in filter(
+								lambda targetP: self.pieces.get(targetP)["pos"] == actpos[actpos.index(actdirect)][a], self.pieces):
+							if str(targetP)[:1] == self.turnowner:
+								for i in range(a, len(actpos[actpos.index(actdirect)]) + 1):
+									actpos[actpos.index(actdirect)].pop(a)
+							elif str(targetP)[:1] != self.turnowner:
+								sidesactions.append({"pos": self.pieces.get(targetP)["pos"], "kill": True})
+								for i in range(a, len(actpos[actpos.index(actdirect)]) + 1):
+									actpos[actpos.index(actdirect)].pop(a)
+					except IndexError: pass
+				try:
+					for finpos in range(len(actpos[actpos.index(actdirect)])):
+						sidesactions.append({"pos": actpos[actpos.index(actdirect)][finpos], "kill": False})
+				except IndexError: pass
+			actions = []
+			diagactpospp = []
+			diagactposnp = []
+			diagactpospn = []
+			diagactposnn = []
+			strtx, strty = self.pieces.get(piece)["pos"]
+			x = strtx
+			y = strty
+			while self.getposxy(x + 1, y + 1)[0] is not None and self.getposxy(x + 1, y + 1)[1] is not None:
+				diagactpospp.append([x + 1, y + 1])
+				x += 1
+				y += 1
+			x = strtx
+			y = strty
+			while self.getposxy(x - 1, y + 1)[0] is not None and self.getposxy(x - 1, y + 1)[1] is not None:
+				diagactposnp.append([x - 1, y + 1])
+				x -= 1
+				y += 1
+			x = strtx
+			y = strty
+			while self.getposxy(x - 1, y - 1)[0] is not None and self.getposxy(x - 1, y - 1)[1] is not None:
+				diagactposnn.append([x - 1, y - 1])
+				x -= 1
+				y -= 1
+			x = strtx
+			y = strty
+			while self.getposxy(x + 1, y - 1)[0] is not None and self.getposxy(x + 1, y - 1)[1] is not None:
+				diagactpospn.append([x + 1, y - 1])
+				x += 1
+				y -= 1
+			diagactpos = [diagactpospp, diagactposnp, diagactposnn, diagactpospn]
+			for dactpos in diagactpos:
+				for actpos in range(len(dactpos)):
+					try:
+						for targetP in filter(lambda targetP: self.pieces.get(targetP)["pos"] == dactpos[actpos],
+						                      self.pieces):
+							if str(targetP)[:1] == self.turnowner:
+								for i in range(actpos, len(dactpos)):
+									diagactpos[diagactpos.index(dactpos)].pop(actpos)
+							elif str(targetP)[:1] != self.turnowner:
+								actions.append({"pos": self.pieces.get(targetP)["pos"], "kill": True})
+								for i in range(actpos + 1, len(dactpos)):
+									diagactpos[diagactpos.index(dactpos)].pop(actpos + 1)
+					except IndexError:
+						break
+					try:
+						actions.append({"pos": dactpos[actpos], "kill": False})
+					except IndexError:
+						pass
+			for kills in filter(lambda kills: actions[kills]["kill"] == True, range(len(actions))):
+				for i in (i for i in range(len(actions)) if actions[i]["pos"] == actions[kills]["pos"] and i != kills):
+					actions.pop(i)
+					break
+				break
+			actions = actions + sidesactions
+			self.pieceactshowed = str(piece)
+			return actions
 		else:
 			raise Exception("White Available Actions: ", "Invalid piece type")
 
