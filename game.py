@@ -1,7 +1,7 @@
 import pygame
 from pygame.locals import *
 import storage
-
+import time
 
 class Game:
 	columnvalues = [61,114,167,220,273,326,379,432] # x-coords for the board's columns
@@ -13,6 +13,7 @@ class Game:
 	pieceactshowed = ""
 	score = {"w":0,"b":0}
 	texttoshow = {"W Score: ":True,"B Score: ":True}
+	teamincheck = None # "w" or "b"
 	
 	def addscore(self, team, ptaken):
 		self.score[str(team)] += int(self.pvalues[str(ptaken[1:2])])
@@ -48,7 +49,8 @@ class Game:
 				pos = x,y = pygame.mouse.get_pos()
 				for piece in self.pieces:
 					if self.teaminturn(piece) and self.pieces.get(piece)["obj_rect"].collidepoint(pos) and self.pieces.get(piece)["pos"] is not None:
-						self.toshow = self.showmoves(piece)
+						if self.teamincheck != self.turnowner:
+							self.toshow = self.showmoves(piece)
 						break
 				if self.showactions:
 					for action in filter(lambda action : self.toshow[action]["obj_rect"].collidepoint(pos), range(len(self.toshow))):
@@ -57,6 +59,9 @@ class Game:
 							if self.toshow[action]["kill"]:
 								for piece in self.pieces:
 									if self.pieces.get(piece)["pos"] == newcoord:
+										if str(piece)[:1] == "K":
+											self.WinCond(self.turnowner)
+											break
 										self.pieces.get(piece)["pos"] = None
 										self.addscore(self.turnowner, piece)
 										break
@@ -75,6 +80,12 @@ class Game:
 					self.text_display((txt+str(self.score["b"])),420,20,20)
 			pygame.display.flip()
 	
+	def WinCond(self, winner):
+		teamname = {"w": "White", "b": "Black"}
+		t_end = time.time() + 10
+		while time.time() < t_end:
+			self.text_display((teamname[winner]+" Team Won!"),250,250,200)
+
 	def switchteams(self):
 		if self.turnowner == "w":
 			self.turnowner = "b"
@@ -277,12 +288,30 @@ class Game:
 		elif type[1:2] == "K":
 			strtx, strty = self.pieces.get(piece)["pos"]
 			actions = []
+			remact = []
 			actpos = [
-				(strtx + 1, strty + 1), (strtx + 1, strty - 1),
-				(strtx - 1, strty + 1), (strtx - 1, strty - 1),
-				(strtx + 1, strty), (strtx - 1, strty),
-				(strtx, strty + 1), (strtx, strty - 1)
+				[strtx + 1, strty + 1], [strtx + 1, strty - 1],
+				[strtx - 1, strty + 1], [strtx - 1, strty - 1],
+				[strtx + 1, strty], [strtx - 1, strty],
+				[strtx, strty + 1], [strtx, strty - 1]
 			]
+			for a in actpos:
+				if self.getposxy(a[0], a[1])[0] is None or self.getposxy(a[0], a[1])[1] is None:
+					actpos.pop(actpos.index(a))
+			for a in range(len(actpos)):
+				act = actpos[a]
+				for targetP in self.pieces:
+					if self.pieces.get(targetP)["pos"] == act:
+						if str(targetP)[:1] == self.turnowner:
+							remact.append(actpos[a])
+						elif str(targetP)[:1] != self.turnowner:
+							actions.append({"pos": actpos[a], "kill": True})
+							remact.append(actpos[a])
+			for rem in remact:
+				actpos.pop(actpos.index(rem))
+			for a in range(len(actpos)):
+				actions.append({"pos": actpos[a], "kill": False})
+			self.pieceactshowed = str(piece)
 			return actions
 		elif type[1:2] == "Q":
 			return "Queen"
