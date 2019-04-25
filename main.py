@@ -10,3 +10,8 @@ storage.connectdbcursor()
 storage.checktables()
 
 Game = game.Game(SetConfig())
+
+def restart():
+	Game.GameOn = False
+	Game = None
+	Game = game.Game(SetConfig())

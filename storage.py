@@ -8,82 +8,68 @@ def connectdbcursor():
 
 def checktables():
 	try:
-		c.execute("SELECT * FROM QTables")
+		c.execute("SELECT * FROM InitPieces")
 	except:
 
-		CreateQTable = [] #{state: dict, qvalue: int}
-		c.execute("""CREATE TABLE QTables (
-			GameID int,
-			QTable BLOB
-		)""")
-		db.commit()
-
-	try:
-		c.execute("SELECT * FROM BotActions")
-	except:
-
-		# CreateBotActions = {
-		# 	p1: { actions:[], alive:True },
-		# 	p2: { actions:[], alive:True },
-		# 	p3: { actions:[], alive:True },
-		# 	p4: { actions:[], alive:True },
-		# 	p5: { actions:[], alive:True },
-		# 	p6: { actions:[], alive:True },
-		# 	p7: { actions:[], alive:True },
-		# 	p8: { actions:[], alive:True },
-		# 	k1: { actions:[], alive:True },
-		# 	k2: { actions:[], alive:True },
-		# 	b1: { actions:[], alive:True },
-		# 	b2: { actions:[], alive:True },
-		# 	r1: { actions:[], alive:True },
-		# 	r2: { actions:[], alive:True },
-		# 	K: { actions:[], alive:True },
-		# 	Q: { actions:[], alive:True },
-		# }
-		c.execute("""CREATE TABLE BotActions (
-			GameID int,
+		c.execute("""CREATE TABLE InitPieces (
 			ActionTable BLOB
 		)""")
 		db.commit()
+		initpiecetable()
 
-def updateactiontable(table, gameid):
+def initpiecetable():
 	try:
-		c.execute("SELECT * FROM BotActions WHERE gameid="+gameid)
+		c.execute("SELECT * FROM InitPieces")
 	except sqlite3.Error as err:
-		raise sqlite3.Error(er)
+		raise sqlite3.Error(err)
 	else:
-		pickledtable = pickle.dumps(table)
-		c.execute("UPDATE BotActions SET ActionTable="+pickledtable+" WHERE gameid="+gameid)
+		pickledtable = pickle.dumps(initpieces)
+		c.execute("UPDATE BotActions SET ActionTable="+pickledtable)
 	finally:
 		db.commit()
 
-def getactiontable(gameid):
+def getpiecetable():
 	try:
-		c.execute("SELECT * FROM BotActions WHERE gameid="+gameid)
+		c.execute("SELECT * FROM BotActions")
 	except sqlite3Error as err:
-		raise sqlite3.Error(er)
+		raise sqlite3.Error(err)
 	else:
-		table = c.fetchall()
-		actiontable = pickle.loads(table)
-		return actiontable
+		pieces = c.fetchall()
+		piecetable = pickle.loads(pieces)
+		return piecetable
 
-def updateQtable(table, gameid):
-	try:
-		c.execute("SELECT * FROM QTables WHERE gameid="+gameid)
-	except sqlite3.Error as err:
-		raise sqlite3.Error(er)
-	else:
-		pickledtable = pickle.dumps(table)
-		c.execute("UPDATE QTables SET QTable")
-	finally:
-		db.commit()
+initpieces = {
+	"wp1": {"pos": [0, 1], "img": "assets/wpawn.png"},
+	"wp2": {"pos": [1, 1], "img": "assets/wpawn.png"},
+	"wp3": {"pos": [2, 1], "img": "assets/wpawn.png"},
+	"wp4": {"pos": [3, 1], "img": "assets/wpawn.png"},
+	"wp5": {"pos": [4, 1], "img": "assets/wpawn.png"},
+	"wp6": {"pos": [5, 1], "img": "assets/wpawn.png"},
+	"wp7": {"pos": [6, 1], "img": "assets/wpawn.png"},
+	"wp8": {"pos": [7, 1], "img": "assets/wpawn.png"},
+	"wb1": {"pos": [2, 0], "img": "assets/wbishop.png"},
+	"wb2": {"pos": [5, 0], "img": "assets/wbishop.png"},
+	"wk1": {"pos": [1, 0], "img": "assets/wknight.png"},
+	"wr1": {"pos": [0, 0], "img": "assets/wrook.png"},
+	"wk2": {"pos": [6, 0], "img": "assets/wknight.png"},
+	"wr2": {"pos": [7, 0], "img": "assets/wrook.png"},
+	"wK_": {"pos": [4, 0], "img": "assets/wking.png"},
+	"wQ_": {"pos": [3, 0], "img": "assets/wqueen.png"},
 
-def getQtable(gameid):
-	try:
-		c.execute("SELECT * FROM QTables WHERE gameid="+gameid)
-	except sqlite.Error as err:
-		raise sqlite3.Error(er)
-	else:
-		table = c.fetchall()
-		qtable = pickle.loads(table)
-		return qtable
+	"bp1": {"pos": [0, 6], "img": "assets/bpawn.png"},
+	"bp2": {"pos": [1, 6], "img": "assets/bpawn.png"},
+	"bp3": {"pos": [2, 6], "img": "assets/bpawn.png"},
+	"bp4": {"pos": [3, 6], "img": "assets/bpawn.png"},
+	"bp5": {"pos": [4, 6], "img": "assets/bpawn.png"},
+	"bp6": {"pos": [5, 6], "img": "assets/bpawn.png"},
+	"bp7": {"pos": [6, 6], "img": "assets/bpawn.png"},
+	"bp8": {"pos": [7, 6], "img": "assets/bpawn.png"},
+	"bb1": {"pos": [2, 7], "img": "assets/bbishop.png"},
+	"bb2": {"pos": [5, 7], "img": "assets/bbishop.png"},
+	"bk1": {"pos": [1, 7], "img": "assets/bknight.png"},
+	"bk2": {"pos": [6, 7], "img": "assets/bknight.png"},
+	"br1": {"pos": [0, 7], "img": "assets/brook.png"},
+	"br2": {"pos": [7, 7], "img": "assets/brook.png"},
+	"bK_": {"pos": [4, 7], "img": "assets/bking.png"},
+	"bQ_": {"pos": [3, 7], "img": "assets/bqueen.png"}
+}
