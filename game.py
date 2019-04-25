@@ -66,7 +66,8 @@ class Game:
 							break
 			if self.showactions:
 				for i in range(len(self.toshow)):
-					self.screen.blit(self.toshow[i]["obj"], self.toshow[i]["pos"])
+					x,y = self.toshow[i]["pos"]
+					self.screen.blit(self.toshow[i]["obj"], (x+3,y+2))
 			for txt in filter(lambda txt: self.texttoshow[txt] is True, self.texttoshow):
 				if txt[:1] == "W":
 					self.text_display((txt+str(self.score["w"])),60,20,20)
@@ -98,10 +99,10 @@ class Game:
 			act = actions.index(actdict)
 			if actions[act]["kill"]:
 				actions[act]["obj"] = pygame.image.load("assets/killspace.png").convert_alpha()
-				actions[act]["obj_rect"] = actions[act]["obj"].get_rect()
 			else:
 				actions[act]["obj"] = pygame.image.load("assets/avalspace.png").convert_alpha()
-				actions[act]["obj_rect"] = actions[act]["obj"].get_rect()
+			actions[act]["obj"] = pygame.transform.scale(actions[act]["obj"], (52, 52))
+			actions[act]["obj_rect"] = actions[act]["obj"].get_rect()
 			try:
 				actions[act]["obj_rect"].centerx , actions[act]["obj_rect"].centery = self.getposxy(actions[act]["pos"][0], actions[act]["pos"][1])
 				showacts.append({"obj": actions[act]["obj"], "pos": (actions[act]["obj_rect"].x, actions[act]["obj_rect"].y), "coord": actions[act]["pos"], "obj_rect": actions[act]["obj_rect"], "kill": actions[act]["kill"] })
@@ -159,25 +160,25 @@ class Game:
 			strtx,strty = self.pieces.get(piece)["pos"]
 			x = strtx
 			y = strty
-			while self.getposxy(x+1,y+1)[0] != None and self.getposxy(x+1,y+1)[1] != None:
+			while self.getposxy(x+1,y+1)[0] is not None and self.getposxy(x+1,y+1)[1] is not None:
 				diagactpospp.append([x+1,y+1])
 				x+=1
 				y+=1
 			x = strtx
 			y = strty
-			while self.getposxy(x-1,y+1)[0] != None and self.getposxy(x-1,y+1)[1] != None:
+			while self.getposxy(x-1,y+1)[0] is not None and self.getposxy(x-1,y+1)[1] is not None:
 				diagactposnp.append([x-1,y+1])
 				x-=1
 				y+=1
 			x = strtx
 			y = strty
-			while self.getposxy(x-1,y-1)[0] != None and self.getposxy(x-1,y-1)[1] != None:
+			while self.getposxy(x-1,y-1)[0] is not None and self.getposxy(x-1,y-1)[1] is not None:
 				diagactposnn.append([x-1,y-1])
 				x-=1
 				y-=1
 			x = strtx
 			y = strty
-			while self.getposxy(x+1,y-1)[0] != None and self.getposxy(x+1,y-1)[1] != None:
+			while self.getposxy(x+1,y-1)[0] is not None and self.getposxy(x+1,y-1)[1] is not None:
 				diagactpospn.append([x+1,y-1])
 				x+=1
 				y-=1
@@ -187,11 +188,11 @@ class Game:
 					try:
 						for targetP in filter(lambda targetP : self.pieces.get(targetP)["pos"] == dactpos[actpos], self.pieces):
 							if str(targetP)[:1] == self.turnowner:
-								for i in range(actpos,len(dactpos)):
+								for i in range(actpos, len(dactpos)):
 									diagactpos[diagactpos.index(dactpos)].pop(actpos)
 							elif str(targetP)[:1] != self.turnowner:
 								actions.append({"pos": self.pieces.get(targetP)["pos"], "kill": True})
-								for i in range(actpos+1,len(dactpos)):
+								for i in range(actpos+1, len(dactpos)):
 									diagactpos[diagactpos.index(dactpos)].pop(actpos+1)
 					except IndexError:
 						break
@@ -205,12 +206,71 @@ class Game:
 					actions.pop(i)
 					break
 				break
-			print(actions)
 			return actions
 		elif type[1:2] == "k":
-			return "knight"
+			actions = []
+			strtx,strty = self.pieces.get(piece)["pos"]
+			actpos = [
+				[strtx + 1, strty + 2], [strtx - 1, strty + 2],
+				[strtx + 1, strty - 2], [strtx - 1, strty - 2],
+				[strtx + 2, strty + 1], [strtx + 2, strty - 1],
+				[strtx - 2, strty + 1], [strtx - 2, strty - 1],
+			]
+			for targetP in filter(lambda targetP : self.pieces.get(targetP)["pos"] in actpos, self.pieces):
+				with actpos.index(self.pieces.get(targetP)["pos"]) as tarind, self.pieces.get(targetP)["pos"] as tarpos:
+					if str(targetP)[:1] == self.turnowner:
+						actpos.pop(tarind)
+					elif str(targetP)[:1] != self.turnowner:
+						actions.append({"pos": tarpos, "kill": True})
+						actpos.pop(tarind)
+			else:
+				with actpos.index(self.pieces.get(targetP)["pos"]) as tarind:
+					for finpos in actpos:
+						actions.append({"pos": finpos, "kill": False})
+						actpos.pop(tarind)
+			self.pieceactshowed = str(piece)
+			return actions
 		elif type[1:2] == "r":
-			return "rook"
+			strtx, strty = self.pieces.get(piece)["pos"]
+			actions = []
+			upactpos = []
+			x, y = strtx, strty
+			while self.getposxy(x,y+1)[1] is not None:
+				upactpos.append([x,y+1])
+				y += 1
+			x, y = strtx, strty
+			dwnactpos = []
+			while self.getposxy(x,y-1)[1] is not None:
+				dwnactpos.append([x,y-1])
+				y -= 1
+			x, y = strtx, strty
+			rgtactpos = []
+			while self.getposxy(x+1,y)[1] is not None:
+				rgtactpos.append([x+1,y])
+				x += 1
+			x, y = strtx, strty
+			lftactpos = []
+			while self.getposxy(x-1,y)[1] is not None:
+				lftactpos.append([x-1,y])
+				x -= 1
+			actpos = [upactpos, dwnactpos, rgtactpos, lftactpos]
+			for actdirect in actpos:
+				for targetP in filter(lambda targetP : self.pieces.get(targetP)["pos"] in actdirect, self.pieces):
+					with self.pieces.get(targetP)["pos"] as tarpos, actdirect.index(self.pieces.get(targetP)["pos"]) as tarind:
+						if str(tarpos)[:1] == self.turnowner:
+							for i in range(tarind, len(actdirect)):
+								actdirect.pop(tarind)
+						elif str(tarpos)[:1] != self.turnowner:
+							actions.append({"pos": tarpos, "kill": True})
+							for i in range(tarind+1, len(actdirect)):
+								actdirect.pop(tarind+1)
+				else:
+					with actdirect.index(self.pieces.get(targetP)["pos"]) as tarind:
+						for finpos in actdirect:
+							actions.append({"pos": finpos, "kill": False})
+							actdirect.pop(tarind)
+			self.pieceactshowed = str(piece)
+			return actions
 		elif type[1:2] == "K":
 			return "King"
 		elif type[1:2] == "Q":
