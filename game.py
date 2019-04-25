@@ -216,18 +216,20 @@ class Game:
 				[strtx + 2, strty + 1], [strtx + 2, strty - 1],
 				[strtx - 2, strty + 1], [strtx - 2, strty - 1],
 			]
-			for targetP in filter(lambda targetP : self.pieces.get(targetP)["pos"] in actpos, self.pieces):
-				with actpos.index(self.pieces.get(targetP)["pos"]) as tarind, self.pieces.get(targetP)["pos"] as tarpos:
-					if str(targetP)[:1] == self.turnowner:
-						actpos.pop(tarind)
-					elif str(targetP)[:1] != self.turnowner:
-						actions.append({"pos": tarpos, "kill": True})
-						actpos.pop(tarind)
-			else:
-				with actpos.index(self.pieces.get(targetP)["pos"]) as tarind:
-					for finpos in actpos:
-						actions.append({"pos": finpos, "kill": False})
-						actpos.pop(tarind)
+			try:
+				for targetP in filter(lambda targetP : self.pieces.get(targetP)["pos"] in actpos, self.pieces):
+					with actpos.index(self.pieces.get(targetP)["pos"]) as tarind, self.pieces.get(targetP)["pos"] as tarpos:
+						if str(targetP)[:1] == self.turnowner:
+							actpos.pop(tarind)
+						elif str(targetP)[:1] != self.turnowner:
+							actions.append({"pos": tarpos, "kill": True})
+							actpos.pop(tarind)
+			except IndexError:
+				pass
+			with actpos.index(self.pieces.get(targetP)["pos"]) as tarind:
+				for finpos in actpos:
+					actions.append({"pos": finpos, "kill": False})
+					actpos.pop(tarind)
 			self.pieceactshowed = str(piece)
 			return actions
 		elif type[1:2] == "r":
@@ -255,20 +257,22 @@ class Game:
 				x -= 1
 			actpos = [upactpos, dwnactpos, rgtactpos, lftactpos]
 			for actdirect in actpos:
-				for targetP in filter(lambda targetP : self.pieces.get(targetP)["pos"] in actdirect, self.pieces):
-					with self.pieces.get(targetP)["pos"] as tarpos, actdirect.index(self.pieces.get(targetP)["pos"]) as tarind:
-						if str(tarpos)[:1] == self.turnowner:
-							for i in range(tarind, len(actdirect)):
-								actdirect.pop(tarind)
-						elif str(tarpos)[:1] != self.turnowner:
-							actions.append({"pos": tarpos, "kill": True})
-							for i in range(tarind+1, len(actdirect)):
-								actdirect.pop(tarind+1)
-				else:
-					with actdirect.index(self.pieces.get(targetP)["pos"]) as tarind:
-						for finpos in actdirect:
-							actions.append({"pos": finpos, "kill": False})
-							actdirect.pop(tarind)
+				try:
+					for targetP in filter(lambda targetP : self.pieces.get(targetP)["pos"] in actdirect, self.pieces):
+						with self.pieces.get(targetP)["pos"] as tarpos, actdirect.index(self.pieces.get(targetP)["pos"]) as tarind:
+							if str(tarpos)[:1] == self.turnowner:
+								for i in range(tarind, len(actdirect)):
+									actdirect.pop(tarind)
+							elif str(tarpos)[:1] != self.turnowner:
+								actions.append({"pos": tarpos, "kill": True})
+								for i in range(tarind+1, len(actdirect)):
+									actdirect.pop(tarind+1)
+				except IndexError:
+					pass
+				with actdirect.index(self.pieces.get(targetP)["pos"]) as tarind:
+					for finpos in actdirect:
+						actions.append({"pos": finpos, "kill": False})
+						actdirect.pop(tarind)
 			self.pieceactshowed = str(piece)
 			return actions
 		elif type[1:2] == "K":
