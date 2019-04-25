@@ -14,7 +14,7 @@ class Game:
 	pieceactshowed = ""
 	score = {"w": 0, "b": 0}
 	texttoshow = {"W Score: ": True, "B Score: ": True}
-	#teamincheck = None  # "w" or "b"
+	teamincheck = None  # "w" or "b"
 
 	def addscore(self, team, ptaken):
 		if str(ptaken)[1:2] == "K":
