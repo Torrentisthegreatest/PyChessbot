@@ -218,7 +218,7 @@ class Game:
 			]
 			try:
 				for targetP in filter(lambda targetP : self.pieces.get(targetP)["pos"] in actpos, self.pieces):
-					with actpos.index(self.pieces.get(targetP)["pos"]) as tarind, self.pieces.get(targetP)["pos"] as tarpos:
+					with actpos.index(self.pieces.get(targetP)["pos"]) as tarind, self.pieces.get(targetP)["pos"] as tarpos: #AttributeError: __enter__
 						if str(targetP)[:1] == self.turnowner:
 							actpos.pop(tarind)
 						elif str(targetP)[:1] != self.turnowner:
@@ -226,10 +226,14 @@ class Game:
 							actpos.pop(tarind)
 			except IndexError:
 				pass
-			with actpos.index(self.pieces.get(targetP)["pos"]) as tarind:
-				for finpos in actpos:
-					actions.append({"pos": finpos, "kill": False})
-					actpos.pop(tarind)
+			try:
+				for targetP in filter(lambda targetP: self.pieces.get(targetP)["pos"] in actpos, self.pieces):
+					with actpos.index(self.pieces.get(targetP)["pos"]) as tarind:
+						for finpos in actpos:
+							actions.append({"pos": finpos, "kill": False})
+							actpos.pop(tarind)
+			except TypeError:
+				pass
 			self.pieceactshowed = str(piece)
 			return actions
 		elif type[1:2] == "r":
@@ -269,10 +273,14 @@ class Game:
 									actdirect.pop(tarind+1)
 				except IndexError:
 					pass
-				with actdirect.index(self.pieces.get(targetP)["pos"]) as tarind:
-					for finpos in actdirect:
-						actions.append({"pos": finpos, "kill": False})
-						actdirect.pop(tarind)
+				try:
+					for targetP in filter(lambda targetP: self.pieces.get(targetP)["pos"] in actdirect, self.pieces):
+						with actdirect.index(self.pieces.get(targetP)["pos"]) as tarind:
+							for finpos in actdirect:
+								actions.append({"pos": finpos, "kill": False})
+								actdirect.pop(tarind)
+				except IndexError:
+					pass
 			self.pieceactshowed = str(piece)
 			return actions
 		elif type[1:2] == "K":
