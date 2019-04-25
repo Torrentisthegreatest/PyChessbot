@@ -14,7 +14,7 @@ class Game:
 	pieceactshowed = ""
 	score = {"w": 0, "b": 0}
 	texttoshow = {"W Score: ": True, "B Score: ": True}
-	teamincheck = None  # "w" or "b"
+	#teamincheck = None  # "w" or "b"
 
 	def addscore(self, team, ptaken):
 		if str(ptaken)[1:2] == "K":
@@ -22,7 +22,6 @@ class Game:
 			from main import restart
 			restart()
 		self.score[str(team)] += int(self.pvalues[str(ptaken[1:2])])
-		print(self.score)
 
 	def text_display(self, text, xpos, ypos, size):
 		largeText = pygame.font.Font('freesansbold.ttf', size)

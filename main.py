@@ -1,4 +1,4 @@
-import configparser, storage, game, os
+import configparser, game, storage
 
 def SetConfig():
 	config = configparser.ConfigParser()
@@ -13,5 +13,4 @@ Game = game.Game(SetConfig())
 
 def restart():
 	Game.GameOn = False
-	Game = None
 	Game = game.Game(SetConfig())
